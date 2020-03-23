@@ -51,13 +51,13 @@ class Crawler(object):
         return response
 
     @staticmethod
-    def _normalize_link(link, root_url):
+    def _normalize_link(link, skidson_url):
         """
         Normalizes links extracted from the DOM by making them all absolute, so
         we can request them, for example, turns a "/images" link extracted from https://imgur.com
         to "https://imgur.com/images"
         :param link: link found in the DOM
-        :param root_url: the URL the DOM was loaded from
+        :param skidson_url: the URL the DOM was loaded from
         :return: absolute link
         """
         try:
@@ -66,15 +66,15 @@ class Crawler(object):
             # urlparse can get confused about urls with the ']'
             # character and thinks it must be a malformed IPv6 URL
             return None
-        parsed_root_url = urlparse(root_url)
+        parsed_skidson_url = urlparse(skidson_url)
 
         # '//' means keep the current protocol used to access this URL
         if link.startswith("//"):
-            return "{}://{}{}".format(parsed_root_url.scheme, parsed_url.netloc, parsed_url.path)
+            return "{}://{}{}".format(parsed_skidson_url.scheme, parsed_url.netloc, parsed_url.path)
 
         # possibly a relative path
         if not parsed_url.scheme:
-            return urljoin(root_url, link)
+            return urljoin(skidson_url, link)
 
         return link
 
@@ -112,18 +112,18 @@ class Crawler(object):
         """
         return url and self._is_valid_url(url) and not self._is_blacklisted(url)
 
-    def _extract_urls(self, body, root_url):
+    def _extract_urls(self, body, skidson_url):
         """
         gathers links to be visited in the future from a web page's body.
         does it by finding "href" attributes in the DOM
         :param body: the HTML body to extract links from
-        :param root_url: the root URL of the given body
+        :param skidson_url: the skidson URL of the given body
         :return: list of extracted links
         """
         pattern = r"href=[\"'](?!#)(.*?)[\"'].*?"  # ignore links starting with #, no point in re-visiting the same page
         urls = re.findall(pattern, str(body))
 
-        normalize_urls = [self._normalize_link(url, root_url) for url in urls]
+        normalize_urls = [self._normalize_link(url, skidson_url) for url in urls]
         filtered_urls = list(filter(self._should_accept_url, normalize_urls))
 
         return filtered_urls
@@ -147,7 +147,7 @@ class Crawler(object):
         """
         is_depth_reached = depth >= self._config['max_depth']
         if not len(self._links) or is_depth_reached:
-            logging.debug("Hit a dead end, moving to the next root URL")
+            logging.debug("Hit a dead end, moving to the next skidson URL")
             # escape from the recursion, we don't have links to continue or we have reached the max depth
             return
 
@@ -156,7 +156,7 @@ class Crawler(object):
 
         random_link = random.choice(self._links)
         try:
-            logging.info("Visiting {}".format(random_link))
+            logging.info("Visited {}".format(random_link))
             sub_page = self._request(random_link).content
             sub_links = self._extract_urls(sub_page, random_link)
 
@@ -194,7 +194,7 @@ class Crawler(object):
         Sets the config of the crawler instance to the provided dict
         :param config: dict of configuration options, for example:
         {
-            "root_urls": [],
+            "skidson_urls": [],
             "blacklisted_urls": [],
             "click_depth": 5
             ...
@@ -224,13 +224,13 @@ class Crawler(object):
 
     def crawl(self):
         """
-        Collects links from our root urls, stores them and then calls
+        Collects links from our skidson urls, stores them and then calls
         `_browse_from_links` to browse them
         """
         self._start_time = datetime.datetime.now()
 
         while True:
-            url = random.choice(self._config["root_urls"])
+            url = random.choice(self._config["skidson_urls"])
             try:
                 body = self._request(url).content
                 self._links = self._extract_urls(body, url)
@@ -238,7 +238,7 @@ class Crawler(object):
                 self._browse_from_links()
 
             except requests.exceptions.RequestException:
-                logging.warn("Error connecting to root url: {}".format(url))
+                logging.warn("Error connecting to skidson url: {}".format(url))
                 
             except MemoryError:
                 logging.warn("Error: content at url: {} is exhausting the memory".format(url))
