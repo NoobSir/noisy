@@ -1,11 +1,11 @@
 {
     "max_depth": 25,
-    "min_sleep": 1,
-    "max_sleep": 2,
+    "min_sleep": .1,
+    "max_sleep": .2,
     "timeout": false,
     "root_urls": [
-        "https://www.xvideos.com/tags/gayporn",
-        "https://www.pornhub.com/gayporn"
+        "https://www.xvideos.com/tags/gayporn/",
+        "https://www.pornhub.com/gayporn/"
     ],
     "blacklisted_urls": [
         "https://t.co",
